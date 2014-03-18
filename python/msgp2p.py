@@ -25,9 +25,9 @@
 #   this box in oder to get the traffic. This has the disavantage to require
 #   a range of private IPs to be reserved for out use.
 
-import btsync
+import sys
 import os
-import thread
+import time
 from threading import Thread
 
 class msgp2p:
@@ -38,42 +38,50 @@ class msgp2p:
   # Path to our folder where peers will communicate with us.
   ourpath = ""
   
-  uniqueid = ""
+  localUID = ""
+  
+  stoplistening = False
   
   received_data_callback = None
   
   # This info must come from a config file.
-  btclient = btsync.Client( host='127.0.0.1', port='8888', username='admin', password='password')
-
-  def __init__(self, uniqueid, received_data_callback):
-      self.uniqueid = uniqueid
+  btclient = None
+  
+  def initbtclient(self):
+    import btsync
+    self.btclient = btsync.Client( host='127.0.0.1', port='8888', username='admin', password='password')
+ 
+  def __init__(self, localUID, received_data_callback):
+      self.localUID = localUID
       self.received_data_callback = received_data_callback
       
-      self.ourpath = self.basepath + self.uniqueid + "/"
+      self.ourpath = self.basepath + self.localUID + "/"
       
       if not os.path.exists(self.ourpath):
-        os.makedirs(self.ourpath)   
-        
-      # Acquire our own folder
-      try:
-        self.btclient.add_sync_folder(self.ourpath, self.uniqueid)
-      except:
-        # Exception while adding folder. This is normal if the folder exists already. API doesn't allow to check before adding for now.
-        print "Folder already mapped."
-        
+        os.makedirs(self.ourpath)           
+        # Acquire our own folder
+        try:
+          if self.btclient == None:
+            self.initbtclient()
+          self.btclient.add_sync_folder(self.ourpath, self.localUID)
+        except:
+          # Exception while adding folder. This is normal if the folder exists already. API doesn't allow to check before adding for now.
+          pass
+          
       # Monitor our folder
       thread = Thread( target = self.monitorFolder )
       thread.start()      
       
   def monitorFolder(self):
-    while(True):
+    while(not self.stoplistening):
       for file in os.listdir(self.ourpath):
-        if file.endswith(".fsbc_oi"):
+        if file.endswith(".msgp2p"):
+          filename = file.translate(None, ".msgp2p")
+          
           # Tokenize the filename
-          tokens = file.split("_")
-          senderid = tokens[0]
-          replyreuested = tokens[1]
-          connectiontype = tokens[2][:tokens[2].find(".")]
+          tokens = filename.split("_")
+          remoteUID = tokens[0]
+          logicalchannel = tokens[1]
           f = open(self.ourpath + file, 'r')
           message = f.readline()
           f.close()
@@ -82,18 +90,54 @@ class msgp2p:
           os.remove(self.ourpath + file)
           
           # Notify the new data
-          self.received_data_callback(self.uniqueid, senderid, message, replyreuested, connectiontype)
+          self.received_data_callback(self.localUID, remoteUID, message, logicalchannel)
           
-  def sendMessage(self, peerid, message, replyreuested="noreply", connectiontype="permanent"):
-    peerpath = self.basepath + peerid
+  def sendMessage(self, remoteUID, message, logicalchannel="msg"):
+    peerpath = self.basepath + remoteUID
     if not os.path.exists(peerpath):
       os.makedirs(peerpath)   
       # Acquire our own folder
-      self.btclient.add_sync_folder(peerpath, peerid)
+      try:
+        if self.btclient == None:
+            self.initbtclient()
+        self.btclient.add_sync_folder(peerpath, remoteUID)
+      except:
+        # Exception while adding folder. This is normal if the folder exists already. API doesn't allow to check before adding for now.
+        pass
 
-    peerfile = self.uniqueid + "_" + replyreuested + "_" + connectiontype + ".fsbc_oi"
+    peerfile = self.localUID + "_" + logicalchannel + "_" + str(int(time.time())) + ".msgp2p"
     f = open(peerpath + "/" + peerfile, 'w')
     f.write(message)
     f.close()
-   
-   
+  
+def dataReceived(localUID, remoteUID, message, logicalchannel):
+ print "Remote UID: " + remoteUID
+ print "LCH: " + logicalchannel
+ print "Message: " + message
+ msgp2p.stoplistening = True
+ exit(0)
+ 
+# If we are run in command line and not included as module we will behave
+#  according to supplied args
+if __name__ == "__main__":
+  # Get command line parameters
+  if not len(sys.argv) > 4:
+    print "Usage: msgp2p send|receive localUID remoteUID [message]"
+    exit(1)
+
+  # Get the arguments.
+  operation = sys.argv[1]
+  localUID = sys.argv[2]
+  remoteUID = sys.argv[3]
+  
+  if len(sys.argv) > 4:
+    message = " ".join(sys.argv[4:])
+  else:
+    message = ""
+  
+  msgp2p = msgp2p(localUID, dataReceived)
+  
+  if operation == "send":
+    msgp2p.sendMessage(remoteUID, message)
+    msgp2p.stoplistening = True
+  
