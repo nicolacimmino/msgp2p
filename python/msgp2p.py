@@ -28,6 +28,8 @@
 import sys
 import os
 import time
+from flask import Flask
+from flask import request
 from threading import Thread
 
 class msgp2p:
@@ -66,7 +68,7 @@ class msgp2p:
           self.btclient.add_sync_folder(self.ourpath, self.localUID)
         except:
           # Exception while adding folder. This is normal if the folder exists already. API doesn't allow to check before adding for now.
-          pass
+          raise
           
       # Monitor our folder
       thread = Thread( target = self.monitorFolder )
@@ -103,7 +105,7 @@ class msgp2p:
         self.btclient.add_sync_folder(peerpath, remoteUID)
       except:
         # Exception while adding folder. This is normal if the folder exists already. API doesn't allow to check before adding for now.
-        pass
+        raise
 
     peerfile = self.localUID + "_" + logicalchannel + "_" + str(int(time.time())) + ".msgp2p"
     f = open(peerpath + "/" + peerfile, 'w')
@@ -117,22 +119,36 @@ def dataReceived(localUID, remoteUID, message, logicalchannel):
  msgp2p.stoplistening = True
  exit(0)
  
+# HTTP ReSTful API for the HTTP gateway
+app = Flask(__name__)
+
+@app.route("/node/<id>/<message>")
+def _res_resources_node(id, message):
+  msgp2p.sendMessage(id, message)
+  return "OK"
+  
+  
+def startFlaskServer():
+    app.run( host = "0.0.0.0", port=4000, debug = False )
+
 # If we are run in command line and not included as module we will behave
 #  according to supplied args
 if __name__ == "__main__":
   # Get command line parameters
-  if not len(sys.argv) > 4:
-    print "Usage: msgp2p send|receive localUID remoteUID [message]"
+  if not len(sys.argv) > 1:
+    print "Usage: msgp2p send|receive|httpd localUID remoteUID [message]"
     exit(1)
 
   # Get the arguments.
   operation = sys.argv[1]
-  localUID = sys.argv[2]
-  remoteUID = sys.argv[3]
   
   if len(sys.argv) > 4:
+    localUID = sys.argv[2]
+    remoteUID = sys.argv[3]
     message = " ".join(sys.argv[4:])
   else:
+    localUID = "A5XJWAMPRFGCVVWZVTVTQQDYC7UMBVGXF"
+    remoteUID = ""
     message = ""
   
   msgp2p = msgp2p(localUID, dataReceived)
@@ -141,3 +157,6 @@ if __name__ == "__main__":
     msgp2p.sendMessage(remoteUID, message)
     msgp2p.stoplistening = True
   
+  if operation == "httpd":
+    thread = Thread( target = startFlaskServer  )
+    thread.start()
