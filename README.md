@@ -12,6 +12,28 @@ While this satisfies all the original requirements it has the downside of introd
 
 msgp2p can be used either as a connand in a Linux shell or as a python library to be included in a larger project.
 
-**Shell Usage
+##Shell Usage
 
-You can use msgp2p as
+You can use msgp2p as follows to send a message:
+
+    msgp2p send address message
+
+
+To receive:
+
+    msgp2p receive address
+
+For instance on one shell you could run:
+
+    msgp2p send ADTPPHNFX6U6QIW72P7GYB5CAEOBNN7CM This is a test message
+
+and in another run:
+
+    msgp2p receive ADTPPHNFX6U6QIW72P7GYB5CAEOBNN7CM
+    
+When the message is received msgp2p will terminate after printing the message content.
+
+
+##Python Usage
+
+You can include msgp2p in your python script and use it to programmatically send and receive messages. And example application that sends and receives messages is included in the "excamples" folder.
