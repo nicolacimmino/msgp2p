@@ -10,7 +10,7 @@ In the current state msgp2p uses Bit Torrent Sync as a bearer, so it in fact enc
 
 While this satisfies all the original requirements it has the downside of introducing a considerable lag which is, usally, in the order of some tens of seconds.
 
-msgp2p can be used either as a connand in a Linux shell or as a python library to be included in a larger project.
+msgp2p can be used either as a command in a Linux shell or as a python library to be included in a larger project.
 
 ##Shell Usage
 
@@ -36,4 +36,4 @@ When the message is received msgp2p will terminate after printing the message co
 
 ##Python Usage
 
-You can include msgp2p in your python script and use it to programmatically send and receive messages. And example application that sends and receives messages is included in the "excamples" folder.
+You can include msgp2p in your python script and use it to programmatically send and receive messages. And example application that sends and receives messages is included in the "examples" folder.
