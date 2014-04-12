@@ -1,4 +1,4 @@
-msgp2p is a lightweight messaging system that allows peers located anywhere on the network to exchange messages with each other without any prior knowledge other than an arbitrary long unique identified assigned to the peer they want to send a message to.
+msgp2p is a lightweight messaging system that allows peers located anywhere on the network to exchange messages with each other without any prior knowledge other than an arbitrary long unique identifier assigned to the peer they want to send a message to.
 
 msgp2p is fully distributed and operates without a central server and behind various types of firewalls and NAT devices without the need for the user to configure them nor have knowledge about them.
 
@@ -8,9 +8,13 @@ In the current state msgp2p uses Bit Torrent Sync as a bearer, so it in fact enc
 
 ![Basic Flow](https://github.com/nicolacimmino/msgp2p/wiki/diagrams/iotp2p_btsync.png)
 
-While this satisfies all the original requirements it has the downside of introducing a considerable lag which is, usally, in the order of some tens of seconds.
+While this satisfies all the original requirements it has the downside of introducing a considerable lag which is, usually, in the order of some tens of seconds. Future releases will address this by removing the reliance on Bit Torrent Sync and implementing a different P2P solution.
 
 msgp2p can be used either as a command in a Linux shell or as a python library to be included in a larger project.
+
+##  Configuration
+
+Before you can use msgp2p you need to have Bit Torrent Sync running and you need to change the "config" file, which is found in the same folder of the module "msgp2p.py". The config file needs to contain the right parameters for your Bit Torrent service configuration.
 
 ##Shell Usage
 
