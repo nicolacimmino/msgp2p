@@ -40,4 +40,4 @@ When the message is received msgp2p will terminate after printing the message co
 
 ##Python Usage
 
-You can include msgp2p in your python script and use it to programmatically send and receive messages. And example application that sends and receives messages is included in the "examples" folder.
+You can include msgp2p in your python script and use it to programmatically send and receive messages. An example application that sends and receives messages is included in the "examples" folder.
